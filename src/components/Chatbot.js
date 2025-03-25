@@ -3,17 +3,18 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { presentationSummary } from "./presentationSummary.js";
-import useSpeechRecognition from "./useSpeechRecognition"; // 🎤 음성 인식 훅
-import LoadingLottie from "./LoadingLottie"; // 🌀 로딩 애니메이션
-import MicIcon from "./icons/MicIcon"; // 🎤 마이크 아이콘 (SVG)
-import StopIconImg from "../assets/Stop button.png"; // 🛑 정지 아이콘 (PNG)
+import useSpeechRecognition from "./useSpeechRecognition";
+import useTextToSpeech from "./useTextToSpeech";
+import LoadingLottie from "./LoadingLottie";
+import MicIcon from "./MicIcon";
+import StopIconImg from "./StopIcon.png";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { speak } = useTextToSpeech();
 
-  // 🎤 음성 인식 훅
   const { isListening, startListening, stopListening } =
     useSpeechRecognition(setUserInput);
 
@@ -73,6 +74,7 @@ const ChatBot = () => {
 
       const botResponse = response.data.choices[0].message.content;
       addBotMessage(botResponse);
+      speak(botResponse);
     } catch (error) {
       console.error("API 요청 오류:", error);
     } finally {
