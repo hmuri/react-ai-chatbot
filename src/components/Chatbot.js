@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
+import { presentationSummary } from "./presentationSummary";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([]);
@@ -18,27 +19,34 @@ const ChatBot = () => {
   };
 
   const handleSubmit = async () => {
-    if (userInput.trim() === "") {
-      return; // 빈 입력 방지
-    }
+    if (userInput.trim() === "") return;
+
     const newUserMessage = {
-      sender: "user",
+      role: "user",
       content: userInput,
     };
 
-    setMessages([...messages, newUserMessage]);
+    const updatedMessages = [
+      {
+        role: "system",
+        content: presentationSummary,
+      },
+      ...messages.map((m) => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        content: m.content,
+      })),
+      newUserMessage,
+    ];
+
+    setMessages([...messages, { sender: "user", content: userInput }]);
+    setUserInput("");
 
     try {
       const response = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "user",
-              content: userInput,
-            },
-          ],
+          model: "gpt-4",
+          messages: updatedMessages,
         },
         {
           headers: {
@@ -49,12 +57,14 @@ const ChatBot = () => {
       );
 
       const botResponse = response.data.choices[0].message.content;
-      addBotMessage(botResponse);
+
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: "bot", content: botResponse },
+      ]);
     } catch (error) {
       console.error("API 요청 오류:", error);
     }
-
-    setUserInput(""); // 입력 필드 초기화
   };
 
   return (
